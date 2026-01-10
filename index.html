@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Language" content="ja">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="stylesheet" href="/style.css?v=20250921-1">
+  <title>ナビサイト</title>
+  <link rel="icon" href="data:,">
+</head>
+
+<body>
+  <main class="layout">
+    <section class="center">
+      <!-- 会話履歴（スクロールするのはここだけ） -->
+      <section id="chat" class="chat" aria-live="polite"></section>
+
+      <!-- 入力フォーム（履歴の下） -->
+      <form id="startForm" class="start">
+        <input
+          id="kw"
+          name="kw"
+          placeholder="例：行方不明者の根拠"
+          required
+          inputmode="search"
+          autocomplete="off"
+          autocapitalize="none"
+        >
+        <button type="submit">送信</button>
+
+        <p class="note">※ ここで入力した語が正しければ、チャットが始まります。</p>
+        <p class="note">※ 「別の回答を考える」と入力すると会話をリセットします。</p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="legal">
+      <p>©人と謎 / Hito to Nazo</p>
+      <p>※このWebサイトの内容はフィクションであり、実在の人物・団体とは一切関係がありません。</p>
+    </div>
+  </footer>
+
+  <script src="/script.js?v=20250921-1" charset="UTF-8"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+﻿@charset "UTF-8";
+
+/* ===== Theme & base ===== */
+:root{
+  --bg:#0f1115;
+  --panel:#11141a;
+  --line:#232735;
+  --text:#e9ecf1;
+  --muted:#a8b0bd;
+  --nAVi:#555;
+  --you:#3b3f51;
+}
+
+*{ box-sizing:border-box }
+
+html, body{
+  height:100%;
+}
+
+/* 画面全体はスクロールさせない（スクロールは chat 内だけ） */
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:16px/1.65 system-ui,"Noto Sans JP",sans-serif;
+
+  display:flex;               /* ★ 追加：上が main、下が footer */
+  flex-direction:column;
+  overflow:hidden;            /* ★ ページ全体は隠す */
+}
+
+/* ▼ ヘッダーは非表示にする */
+.topbar{ display:none; }
+.brand{ font-weight:800 }
+
+/* ===== Layout ===== */
+/* main を「残りの高さ全部」にして、footer は下に確保 */
+.layout{
+  flex:1;                     /* ★ 追加：残り高さを全部使う */
+  display:flex;
+  justify-content:center;
+  align-items:stretch;
+  padding:14px;               /* 余白 */
+  min-height:0;               /* ★ 重要：内部スクロールを効かせるため */
+}
+
+.center{
+  width:min(820px,92vw);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:0;               /* ★ 重要：chat のスクロールを効かせる */
+}
+
+/* ===== Chat (固定高さ + スクロールバー) ===== */
+/* トーク枠を「一定の高さ」で固定 */
+.chat{
+  height:min(520px, 58vh);    /* ★ 固定：最大520px、画面が小さい時は58vh */
+  overflow:auto;              /* ★ スクロールバー */
+  background:#11141a;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  scroll-behavior:smooth;
+}
+
+/* ===== Form ===== */
+.start{
+  display:grid;
+  gap:10px;
+  background:#11141a;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+}
+
+.start label{
+  font-size:14px;
+  color:var(--muted);
+}
+
+.start input{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#0f1115;
+  color:var(--text);
+}
+
+.start button{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#0b1220;
+  cursor:pointer;
+}
+
+.note{
+  font-size:12px;
+  color:var(--muted);
+  margin:0;
+}
+
+/* ===== Messages ===== */
+.msg{
+  max-width:720px;
+  margin:10px 0;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.msg.nAVi{ justify-content:flex-start }
+.msg.you{ justify-content:flex-end }
+
+.bubble{
+  padding:12px 14px;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+.nAVi .bubble{
+  background:var(--nAVi);
+  color:#fff;
+  border-top-left-radius:6px;
+}
+.you .bubble{
+  background:var(--you);
+  color:#fff;
+  border-top-right-radius:6px;
+}
+
+/* Avatar */
+.avatar{
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  overflow:hidden;
+  background:#2b2f3b;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+  margin-top:4px;
+}
+.avatarimg{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.avatar-fallback{
+  color:#fff;
+  font-weight:700;
+  font-size:13px;
+}
+
+.msg.nAVi .bubble{
+  max-width:calc(100% - 50px);
+}
+
+/* Typing */
+.typing{
+  display:inline-block;
+  min-width:22px;
+}
+.typing::after{
+  content:"…";
+  animation:blink 1s infinite steps(1,end);
+}
+@keyframes blink{
+  50%{ opacity:.25 }
+}
+
+/* Hint UI */
+.hints{
+  display:grid;
+  gap:8px;
+  margin-top:8px;
+}
+.hint{
+  background:#0f1115;
+  border:1px dashed var(--line);
+  border-radius:10px;
+  padding:10px;
+}
+.hint small{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  margin-bottom:6px;
+}
+
+/* Actions */
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.actions a{
+  border-radius:999px;
+  border:1px solid var(--line);
+  padding:8px 12px;
+  background:#fff;
+  color:#0b1220;
+  text-decoration:none;
+}
+
+/* Hint buttons */
+.hint-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+}
+.hint-btn{
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#232735;
+  color:#e9ecf1;
+  font-size:12px;
+  cursor:pointer;
+}
+.hint-btn:hover{
+  background:#2f3645;
+}
+
+/* ===== Footer（必ず全表示） ===== */
+.foot{
+  flex:0 0 auto;              /* ★ 必要高さを確保 */
+  padding:10px 14px;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  background:#0f1115;
+}
+
+.foot small{
+  display:block;
+  text-align:right;           /* updatedは右寄せのまま */
+}
+
+/* 注意書きは読みやすく左寄せ + 折り返し */
+.foot .legal{
+  margin-top:8px;
+  text-align:left;
+}
+.foot .legal p{
+  margin:4px 0;
+  line-height:1.5;
+  word-break:break-word;
+}
+
+/* Responsive */
+@media (max-width:600px){
+  .layout{ padding:10px; }
+  .chat{ height:min(460px, 56vh); }
+  .bubble{ padding:10px 12px; border-radius:12px; }
+}
