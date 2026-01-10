@@ -1,4 +1,13 @@
-// netlify/functions/chat.js
+// functions/chat.js
+//
+// Netlify Functions 版（exports.handler）を Cloudflare Pages Functions に移植したもの。
+// 元の仕様：
+// - POSTのみ
+// - keyword / step / answer / context / hintIndex を受け取る
+// - ヒントボタン対応
+// - 正誤判定、praise、summaryBuilder、sendText（LINE送信用）対応
+//
+// 参考：ユーザー提供の netlify/functions/chat.js :contentReference[oaicite:1]{index=1}
 
 // ───────────────────────────────────────────────────────────────
 // 共通設定（nAVi の性格）
@@ -20,22 +29,30 @@ function randomRetry() {
 const DEFAULT_PRAISE = 'ありがとうございます。';
 
 // ───────────────────────────────────────────────────────────────
-// ハンドラ本体
+// Cloudflare Pages Functions エントリ
 // ───────────────────────────────────────────────────────────────
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+export async function onRequest(context) {
+  const { request } = context;
+
+  // CORS が必要ならここで許可（同一オリジン運用なら不要）
+  // まずは安全に OPTIONS を通すだけ入れておきます
+  if (request.method === 'OPTIONS') {
+    return new Response('', { status: 200, headers: corsHeaders(request) });
   }
 
-  let keyword = '', step = '_start', answer = '', context = {}, hintIndex = null;
+  if (request.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
+
+  let keyword = '', step = '_start', answer = '', ctx = {}, hintIndex = null;
 
   try {
-    const body = JSON.parse(event.body || '{}');
-    keyword    = String(body.keyword || '').trim();
-    step       = String(body.step    || '_start').trim();
-    answer     = String(body.answer  || '').trim();
-    context    = body.context && typeof body.context === 'object' ? body.context : {};
+    const body = await request.json();
+    keyword = String(body.keyword || '').trim();
+    step    = String(body.step || '_start').trim();
+    answer  = String(body.answer || '').trim();
+    ctx     = body.context && typeof body.context === 'object' ? body.context : {};
 
     if (body.hintIndex !== undefined && body.hintIndex !== null) {
       hintIndex = Number(body.hintIndex);
@@ -44,14 +61,14 @@ exports.handler = async (event) => {
 
   const flows = getFlows();
   const flow  = flows[keyword];
-  if (!flow) return json({ ok:false, error:'not_found' }, 404);
+  if (!flow) return json({ ok:false, error:'not_found' }, 404, request);
 
   const map   = flow.map;
   const first = map.__order[0];
   const node  = map[step] || map[first];
 
   // ★ ヒントボタンが押された場合
-  if (hintIndex !== null && !isNaN(hintIndex)) {
+  if (hintIndex !== null && !Number.isNaN(hintIndex)) {
     const hints = node.hints || [];
     const hint  = hints[hintIndex];
 
@@ -64,9 +81,9 @@ exports.handler = async (event) => {
       role: node.role || 'nAVi',
       prompt: text,
       next: node.key,
-      context,
+      context: ctx,
       sendText: null
-    });
+    }, 200, request);
   }
 
   // 「最初のプロンプトだけ欲しい」＝answer 空（ヒント要求ではない）
@@ -76,7 +93,9 @@ exports.handler = async (event) => {
       reply(n.prompt, n.role, n.key, {
         next: n.key,
         sendText: null
-      })
+      }),
+      200,
+      request
     );
   }
 
@@ -96,18 +115,20 @@ exports.handler = async (event) => {
       reply(`💡 ${retryMsg}\n\n必要であれば、ヒントボタンを押してみてください。`, node.role, node.key, {
         next: node.key,
         retry: true,
-        context,
+        context: ctx,
         sendText: null,
         hints: hintButtons
-      })
+      }),
+      200,
+      request
     );
   }
 
   // 正解 → 値を保存
-  if (node.capture) context[node.capture] = answer;
+  if (node.capture) ctx[node.capture] = answer;
 
   // これまでに決まっている送信用テキスト（あれば）
-  let sendText = context.__sendText || null;
+  let sendText = ctx.__sendText || null;
 
   // 次ステップを決定
   const isLast  = (node.key === map.__order.at(-1));
@@ -118,12 +139,12 @@ exports.handler = async (event) => {
   let promptText = next ? next.prompt : 'ここまで一緒に整理できました。';
   if (nextKey === 'summary') {
     const builder = flow.summaryBuilder || defaultSummary;
-    promptText = builder(context, answer);
+    promptText = builder(ctx, answer);
 
     // 各フローごとの「短い答え」を LINE 送信用テキストとして採用
     if (flow.shortAnswer) {
       sendText = flow.shortAnswer;
-      context.__sendText = sendText;
+      ctx.__sendText = sendText;
     }
   }
 
@@ -136,11 +157,11 @@ exports.handler = async (event) => {
     role: next?.role || 'nAVi',
     prompt: finalPrompt,
     next: nextKey,
-    context,
+    context: ctx,
     // フロント側で LINE に送るときに使うテキスト
     sendText: sendText || null
-  });
-};
+  }, 200, request);
+}
 
 // ───────────────────────────────────────────────────────────────
 // ユーティリティ
@@ -150,19 +171,32 @@ function reply(prompt, role = 'nAVi', next = '_start', extra = {}) {
   return Object.assign({ ok: true, role, prompt, next }, extra);
 }
 
-function json(obj, code = 200) {
+function corsHeaders(request) {
+  // 必要なら Origin を絞ってください（まずは * で）
+  const origin = request.headers.get('Origin') || '*';
   return {
-    statusCode: code,
-    headers: {
-      'Content-Type':'application/json; charset=utf-8',
-      'Cache-Control':'no-store'
-    },
-    body: JSON.stringify(obj)
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
   };
 }
 
+function json(obj, code = 200, request = null) {
+  const headers = {
+    'Content-Type':'application/json; charset=utf-8',
+    'Cache-Control':'no-store'
+  };
+  // OPTIONSを返す場合など、CORS を付けたいとき用
+  if (request) Object.assign(headers, corsHeaders(request));
+
+  return new Response(JSON.stringify(obj), {
+    status: code,
+    headers
+  });
+}
+
 // ───────────────────────────────────────────────────────────────
-// 会話フロー定義
+// 会話フロー定義（※ここから下は、元の chat.js と同じ）
 // ───────────────────────────────────────────────────────────────
 
 function buildMapFromSteps(steps, tailLabels = {}) {
@@ -213,7 +247,7 @@ function buildMapFromSteps(steps, tailLabels = {}) {
 }
 
 // 既定サマリー（Q1 用の汎用例）
-function defaultSummary(ctx, lastAnswer) {
+function defaultSummary(_ctx, _lastAnswer) {
   return (
     '一緒に整理すると、『参加者数が減っているのに全員参加と記されている』という矛盾が浮かび上がってきますね。' +
     'この結論で、奇録会に送信してみましょうか？（送信 と入力）'
