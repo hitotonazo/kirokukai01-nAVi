@@ -90,8 +90,8 @@ body::after{
 }
 
 .center{
-  width:min(860px, 94vw);
-  display:flex;
+  width:min(560px, 94vw);
+display:flex;
   flex-direction:column;
   gap:12px;
   min-height:0;
@@ -124,6 +124,8 @@ body::after{
 
 /* ===== Form ===== */
 .start{
+  width:100%;
+
   display:grid;
   gap:10px;
 
@@ -412,8 +414,8 @@ body.is-splash .splash-head{
 
 /* Make the form feel like a "standby console" on splash */
 body.is-splash .start{
-  width:min(560px, 94vw);
-  margin:0 auto;
+  width:100%;
+  margin:0;
 }
 body.is-splash .note{
   opacity:.75;
@@ -473,7 +475,14 @@ body.is-splash .note{
 }
 
 /* ===== Footer: smaller copyright line ===== */
-.foot .legal p:first-child{
+.foot .legal p{
+  font-size:11px;
+  opacity:.72;
+}
+
+
+/* unify footer legal text size */
+.foot .legal p{
   font-size:11px;
   opacity:.72;
 }
