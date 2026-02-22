@@ -13,9 +13,13 @@
   <link rel="icon" href="data:,">
 </head>
 
-<body>
+<body class="is-splash">
+  <div id="jam" class="jam" aria-hidden="true"></div>
   <main class="layout">
     <section class="center">
+      <div id="splashHead" class="splash-head" aria-hidden="false">
+        <img class="splash-icon" src="/img/navi-avatar.png" alt="nAVi">
+      </div>
       <!-- 会話履歴（スクロールするのはここだけ） -->
       <section id="chat" class="chat" aria-live="polite"></section>
 
@@ -24,7 +28,7 @@
         <input
           id="kw"
           name="kw"
-          placeholder="例：行方不明者の根拠"
+          placeholder="入力欄をクリック"
           required
           inputmode="search"
           autocomplete="off"
