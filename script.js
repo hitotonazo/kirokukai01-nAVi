@@ -341,7 +341,54 @@ function smartLineOpen(label){
   }
 }
 
-// ページ読み込み時に nAVi のあいさつを表示
+
+
+
+/* ===== 起動演出（ジャミング → 待機 → クリックで起動） ===== */
+function runJamEffect(){
+  const jam = document.getElementById('jam');
+  if(!jam) return;
+  jam.classList.add('active');
+  // ちょい長めに見せてからフェードアウト
+  setTimeout(()=> jam.classList.remove('active'), 900);
+  // DOMから消して負荷を下げる
+  setTimeout(()=> jam.remove(), 1600);
+}
+
+let booted = false;
+function bootExperience(){
+  if(booted) return;
+  booted = true;
+
+  // スプラッシュ解除（チャット表示）
+  document.body.classList.remove('is-splash');
+
+  // placeholder を本番に戻す
+  kwInput.placeholder = '例：行方不明者の根拠';
+
+  // すぐに挨拶開始（“開いた瞬間”の体験）
+  // 0.2s だけ待ってUIが展開してから発話
+  setTimeout(()=> nAViSay(NAVI_GREETING, 350, 18), 200);
+}
+
 window.addEventListener('load', () => {
-  nAViSay(NAVI_GREETING, 500, 18);
+  // ジャミング風ノイズ（アクセス時）
+  runJamEffect();
+
+  // 最初は「入力欄をクリック」状態（chatはCSSで隠れる）
+  kwInput.value = '';
+  kwInput.placeholder = '入力欄をクリック';
+
+  // クリック/フォーカスで起動（最初の1回だけ）
+  const once = () => bootExperience();
+  kwInput.addEventListener('pointerdown', once, { once:true });
+  kwInput.addEventListener('focus', once, { once:true });
+
+  // Enter送信が先に走らないよう、スプラッシュ中は submit を抑制
+  form.addEventListener('submit', (e)=>{
+    if(document.body.classList.contains('is-splash')){
+      e.preventDefault();
+      bootExperience();
+    }
+  }, { capture:true });
 });
