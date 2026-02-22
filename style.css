@@ -396,8 +396,10 @@ body.is-splash .splash-head{
   display:grid;
 }
 .splash-icon{
-  width:96px;
-  height:96px;
+  width:114px;  /* 3x chat avatar (38px * 3) */
+  height:114px;
+  max-width:40vw;
+  max-height:40vw;
   border-radius:28px;
   object-fit:cover;
   border:1px solid rgba(124,247,255,.40);
